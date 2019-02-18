@@ -1,0 +1,923 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>蓝牙失联</title>
+<script src="js/echarts.js"></script>
+<script src="js/jquery-3.3.1.min.js"></script>
+<script src="js/jquery-editable-select.min.js"></script>
+<link href="js/jquery-editable-select.min.css" rel="stylesheet">
+</head>
+<body>
+	<h3>1. 蓝牙版本版本分布情况</h3>
+	<div>
+		&nbsp;&nbsp; <label>厂商</label>&nbsp; <select
+			id="ver_brand_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>平台</label>&nbsp; <select
+			id="ver_chiptype_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>遥控器</label>&nbsp; <select
+			id="ver_ctype_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <input type="button" value="查询"
+			onclick="freshBTVerChart(btVerChart, ctype, chiptype, brand)" />
+	</div>
+	<div id="bt_ver" style="width: auto; height: 600px;"></div>
+	<script type="text/javascript">
+		var brand;
+		var chiptype;
+		var ctype;
+		$('#ver_brand_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#ver_chiptype_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#ver_ctype_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#ver_brand_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					brand = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#ver_chiptype_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					chiptype = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#ver_ctype_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					ctype = (dom.text() == 'All' ? '' : dom.text());
+					if (ctype == '科大')
+						ctype = 1;
+					else if (ctype == '浩博高')
+						ctype = 2;
+					else if (ctype == '微纳')
+						ctype = 3;
+				});
+
+		$(document).ready(
+				function() {
+					initBTVerChart(btVerChart);
+					initVerSelect('brand', '#ver_brand_editable-select',
+							'#ver_chiptype_editable-select',
+							'#ver_ctype_editable-select');
+					initVerSelect('chiptype', '#ver_brand_editable-select',
+							'#ver_chiptype_editable-select',
+							'#ver_ctype_editable-select');
+					initVerSelect('ctype', '#ver_brand_editable-select',
+							'#ver_chiptype_editable-select',
+							'#ver_ctype_editable-select');
+					freshBTVerChart(btVerChart, ctype, chiptype, brand);
+				});
+
+		var btVerChart = echarts.init(document.getElementById('bt_ver'));
+
+		function initBTVerChart(chart) {
+			chart.setOption({
+				title : {
+					subtext : '按天统计',
+					x : 'center'
+				},
+				tooltip : {
+					trigger : 'item',
+					formatter : "{a} <br/>{b} : {c} ({d}%)"
+				},
+				legend : {
+					type : 'scroll',
+					orient : 'vertical',
+					right : 10,
+					top : 20,
+					bottom : 20,
+					data : [],
+
+				//selected : data.selected
+				},
+				series : [ {
+					name : 'version code',
+					type : 'pie',
+					radius : '55%',
+					center : [ '50%', '50%' ],
+					data : [],
+					itemStyle : {
+						emphasis : {
+							shadowBlur : 10,
+							shadowOffsetX : 0,
+							shadowColor : 'rgba(0, 0, 0, 0.5)'
+						}
+					}
+				} ]
+			})
+		}
+
+		function initVerSelect(type, ver_brand, ver_chiptype, ver_ctype) {
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "btSelectParamServlet.action",
+				data : {
+					'ptype' : type
+				},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							if (result[i].type == 'brand') {
+								$(ver_brand).editableSelect('add', function() {
+									$(this).text(result[i].param);
+								});
+							} else if (result[i].type == 'chiptype') {
+								$(ver_chiptype).editableSelect('add',
+										function() {
+											$(this).text(result[i].param);
+										});
+							} else if (result[i].type == 'ctype') {
+								$(ver_ctype).editableSelect('add', function() {
+									if (result[i].param == 1)
+										$(this).text('科大');
+									else if (result[i].param == 2)
+										$(this).text('浩博高');
+									else if (result[i].param == 3)
+										$(this).text('微纳');
+								});
+							}
+						}
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+				}
+			})
+		}
+
+		function freshBTVerChart(chart, ctype, chiptype, brand) {
+			var btVerLegendData = [];
+			var btVerSeriesData = [];
+			var btVerSelected = [];
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "btVersionServlet.action",
+				data : {
+					'ctype' : ctype,
+					'chiptype' : chiptype,
+					'brand' : brand
+				},
+				dataType : "json",
+				success : function(result) {
+					//alert(result);
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							btVerLegendData.push(result[i].btVer);
+							btVerSeriesData.push({
+								name : result[i].btVer,
+								value : result[i].count
+							});
+							btVerSelected[name] = i < 6;
+						}
+						chart.setOption({
+							legend : {
+								data : btVerLegendData
+							},
+							series : [ {
+								data : btVerSeriesData
+							} ]
+						})
+					}
+				},
+				error : function(errorMsg) {
+					alert("蓝牙版本分布情况数据失败!");
+					chart.hideLoading();
+				}
+			})
+		}
+	</script>
+
+	<!-- ============================================================================================================================================================ -->
+
+	<h3>2. 蓝牙日活</h3>
+	<div>
+		&nbsp;&nbsp; <label>厂商</label>&nbsp; <select
+			id="status_brand_editable-select2"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>平台</label>&nbsp; <select
+			id="status_chiptype_editable-select2"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>遥控器</label>&nbsp; <select
+			id="status_ctype_editable-select2"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>ROM版本</label>&nbsp; <select
+			id="status_romver_editable-select2"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <input type="button" value="查询"
+			onclick="freshBTStatusChart2()" />
+	</div>
+	<div id="bt_status2" style="width: auto; height: 600px;"></div>
+	<script type="text/javascript">
+		var statusBrand2;
+		var statusChiptype2;
+		var statusCtype2;
+		var statusRomver2;
+		$('#status_brand_editable-select2').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_chiptype_editable-select2').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_ctype_editable-select2').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_romver_editable-select2').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_brand_editable-select2').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					statusBrand2 = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#status_chiptype_editable-select2').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					statusChiptype2 = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#status_ctype_editable-select2').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					statusCtype2 = (dom.text() == 'All' ? '' : dom.text());
+					if (statusCtype2 == '科大')
+						statusCtype2 = 1;
+					else if (statusCtype2 == '浩博高')
+						statusCtype2 = 2;
+					else if (statusCtype2 == '微纳')
+						statusCtype2 = 3;
+				});
+		$('#status_romver_editable-select2').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					statusRomver2 = (dom.text() == 'All' ? '' : dom.text());
+				});
+
+		$(document).ready(function() {
+			initBTStatusChart2();
+			initStatusSelect2('statusbrand');
+			initStatusSelect2('statuschiptype');
+			initStatusSelect2('statusctype');
+			initStatusSelect2('statusromver');
+			freshBTStatusChart2();
+		});
+
+		var btStatusChart2 = echarts
+				.init(document.getElementById('bt_status2'));
+
+		function initBTStatusChart2() {
+			btStatusChart2.setOption({
+				tooltip : {
+					trigger : 'axis',
+					axisPointer : {
+						type : 'cross',
+						label : {
+							backgroundColor : '#6a7985'
+						}
+					}
+				},
+				legend : {
+					data : [ '蓝牙版本' ]
+				},
+				grid : {
+					left : '3%',
+					right : '4%',
+					bottom : '3%',
+					containLabel : true
+				},
+				xAxis : [ {
+					type : 'category',
+					boundaryGap : false,
+					data : []
+				} ],
+				yAxis : [ {
+					type : 'value'
+				} ],
+				series : [ {
+					name : '蓝牙版本',
+					type : 'line',
+					label : {
+						normal : {
+							show : false,
+							position : 'top'
+						}
+					},
+					data : []
+				} ]
+
+			})
+		}
+
+		function initStatusSelect2(type) {
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "btSelectParamServlet.action",
+				data : {
+					'ptype' : type
+				},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							if (result[i].type == 'statusbrand') {
+								$('#status_brand_editable-select2')
+										.editableSelect('add', function() {
+											$(this).text(result[i].param);
+										});
+							} else if (result[i].type == 'statuschiptype') {
+								$('#status_chiptype_editable-select2')
+										.editableSelect('add', function() {
+											$(this).text(result[i].param);
+										});
+							} else if (result[i].type == 'statusctype') {
+								$('#status_ctype_editable-select2')
+										.editableSelect('add', function() {
+											if (result[i].param == 1)
+												$(this).text('科大');
+											else if (result[i].param == 2)
+												$(this).text('浩博高');
+											else if (result[i].param == 3)
+												$(this).text('微纳');
+										});
+							} else if (result[i].type == 'statusromver') {
+								$('#status_romver_editable-select2')
+										.editableSelect('add', function() {
+											$(this).text(result[i].param);
+										});
+							}
+						}
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+				}
+			})
+		}
+
+		function freshBTStatusChart2() {
+			var total = [];
+			var date = [];
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "btStatusServlet.action",
+				data : {
+					'ctype' : statusCtype2,
+					'chiptype' : statusChiptype2,
+					'brand' : statusBrand2,
+					'romver' : statusRomver2
+				},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							total.push(result[i].total);
+							date.push(result[i].date);
+						}
+						btStatusChart2.setOption({
+							xAxis : {
+								data : date
+							},
+							series : [ {
+								data : total
+							} ]
+						})
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+					btStatusChart2.hideLoading();
+				}
+			})
+		}
+	</script>
+
+	<!-- ============================================================================================================================================================ -->
+
+	<h3>3. 预测蓝牙失联情况</h3>
+	<div>
+		&nbsp;&nbsp; <label>厂商</label>&nbsp; <select
+			id="status_brand_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>平台</label>&nbsp; <select
+			id="status_chiptype_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>遥控器</label>&nbsp; <select
+			id="status_ctype_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>ROM版本</label>&nbsp; <select
+			id="status_romver_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <input type="button" value="查询"
+			onclick="freshBTStatusChart()" />
+	</div>
+	<div id="bt_status" style="width: auto; height: 600px;"></div>
+	<script type="text/javascript">
+		var statusBrand;
+		var statusChiptype;
+		var statusCtype;
+		var statusRomver;
+		$('#status_brand_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_chiptype_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_ctype_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_romver_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_brand_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					statusBrand = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#status_chiptype_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					statusChiptype = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#status_ctype_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					statusCtype = (dom.text() == 'All' ? '' : dom.text());
+					if (statusCtype == '科大')
+						statusCtype = 1;
+					else if (statusCtype == '浩博高')
+						statusCtype = 2;
+					else if (statusCtype == '微纳')
+						statusCtype = 3;
+				});
+		$('#status_romver_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					statusRomver = (dom.text() == 'All' ? '' : dom.text());
+				});
+
+		$(document).ready(function() {
+			initBTStatusChart();
+			initStatusSelect('statusbrand');
+			initStatusSelect('statuschiptype');
+			initStatusSelect('statusctype');
+			initStatusSelect('statusromver_3');
+			freshBTStatusChart();
+		});
+
+		var btStatusChart = echarts.init(document.getElementById('bt_status'));
+
+		function initBTStatusChart() {
+			btStatusChart.setOption({
+				tooltip : {
+					trigger : 'axis',
+					axisPointer : {
+						type : 'cross',
+						label : {
+							backgroundColor : '#6a7985'
+						}
+					}
+				},
+				legend : {
+					data : [ '蓝牙配对界面弹出', '用户主动配对蓝牙', '失联回调' ]
+				},
+				grid : {
+					left : '3%',
+					right : '4%',
+					bottom : '3%',
+					containLabel : true
+				},
+				xAxis : [ {
+					type : 'category',
+					boundaryGap : false,
+					data : []
+				} ],
+				yAxis : [ {
+					type : 'value'
+				} ],
+				series : [ {
+					name : '蓝牙配对界面弹出',
+					type : 'line',
+					label : {
+						normal : {
+							show : false,
+							position : 'top'
+						}
+					},
+					data : []
+				}, {
+					name : '用户主动配对蓝牙',
+					type : 'line',
+					label : {
+						normal : {
+							show : false,
+							position : 'top'
+						}
+					},
+					data : []
+				}, {
+					name : '失联回调',
+					type : 'line',
+					label : {
+						normal : {
+							show : false,
+							position : 'top'
+						}
+					},
+					data : []
+				} ]
+
+			})
+		}
+
+		function initStatusSelect(type) {
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "btSelectParamServlet.action",
+				data : {
+					'ptype' : type
+				},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							if (result[i].type == 'statusbrand') {
+								$('#status_brand_editable-select')
+										.editableSelect('add', function() {
+											$(this).text(result[i].param);
+										});
+							} else if (result[i].type == 'statuschiptype') {
+								$('#status_chiptype_editable-select')
+										.editableSelect('add', function() {
+											$(this).text(result[i].param);
+										});
+							} else if (result[i].type == 'statusctype') {
+								$('#status_ctype_editable-select')
+										.editableSelect('add', function() {
+											if (result[i].param == 1)
+												$(this).text('科大');
+											else if (result[i].param == 2)
+												$(this).text('浩博高');
+											else if (result[i].param == 3)
+												$(this).text('微纳');
+										});
+							} else if (result[i].type == 'statusromver_3') {
+								$('#status_romver_editable-select')
+										.editableSelect('add', function() {
+											$(this).text(result[i].param);
+										});
+							}
+						}
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+				}
+			})
+		}
+
+		function freshBTStatusChart() {
+			var ui = [];
+			var pair = [];
+			var callback = [];
+			var date = [];
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "btStatusServlet.action",
+				data : {
+					'ctype' : statusCtype,
+					'chiptype' : statusChiptype,
+					'brand' : statusBrand,
+					'romver' : statusRomver
+				},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							ui.push(result[i].ui);
+							pair.push(result[i].pair);
+							callback.push(result[i].callback);
+							date.push(result[i].date);
+						}
+						btStatusChart.setOption({
+							xAxis : {
+								data : date
+							},
+							series : [ {
+								data : ui
+							}, {
+								data : pair
+							}, {
+								data : callback
+							} ]
+						})
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+					btStatusChart.hideLoading();
+				}
+			})
+		}
+	</script>
+
+	<!-- ============================================================================================================================================================ -->
+
+	<h3>4. 蓝牙失败(mac去重)</h3>
+	<div>
+		&nbsp;&nbsp; <label>厂商</label>&nbsp; <select
+			id="pair_brand_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>平台</label>&nbsp; <select
+			id="pair_chiptype_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>遥控器</label>&nbsp; <select
+			id="pair_ctype_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>ROM版本</label>&nbsp; <select
+			id="pair_romver_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <input type="button" value="查询"
+			onclick="freshBTPairChart(btPairChart, pairChiptype, pairChiptype, pairBrand, '1', pairRomver)" />
+	</div>
+	<div id="bt_pair" style="width: auto; height: 600px;"></div>
+	<script type="text/javascript">
+		var pairBrand;
+		var pairChiptype;
+		var pairCtype;
+		var pairRomver;
+		$('#pair_brand_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#pair_chiptype_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#pair_ctype_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#pair_romver_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#pair_brand_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					pairBrand = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#pair_chiptype_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					pairChiptype = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#pair_ctype_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					pairCtype = (dom.text() == 'All' ? '' : dom.text());
+					if (pairCtype == '科大')
+						pairCtype = 1;
+					else if (pairCtype == '浩博高')
+						pairCtype = 2;
+					else if (pairCtype == '微纳')
+						pairCtype = 3;
+				});
+		$('#pair_romver_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					pairRomver = (dom.text() == 'All' ? '' : dom.text());
+				});
+
+		$(document).ready(
+				function() {
+					initBTPairChart(btPairChart);
+					initPairSelect('pairbrand', '#pair_brand_editable-select',
+							'#pair_chiptype_editable-select',
+							'#pair_ctype_editable-select',
+							'#pair_romver_editable-select');
+					initPairSelect('pairchiptype',
+							'#pair_brand_editable-select',
+							'#pair_chiptype_editable-select',
+							'#pair_ctype_editable-select',
+							'#pair_romver_editable-select');
+					initPairSelect('pairctype', '#pair_brand_editable-select',
+							'#pair_chiptype_editable-select',
+							'#pair_ctype_editable-select',
+							'#pair_romver_editable-select');
+					initPairSelect('pairromver', '#pair_brand_editable-select',
+							'#pair_chiptype_editable-select',
+							'#pair_ctype_editable-select',
+							'#pair_romver_editable-select');
+					freshBTPairChart(btPairChart, pairChiptype, pairChiptype,
+							pairBrand, '1', pairRomver);
+				});
+
+		var btPairChart = echarts.init(document.getElementById('bt_pair'));
+
+		function initBTPairChart(chart) {
+			chart.setOption({
+				tooltip : {
+					trigger : 'axis',
+					axisPointer : {
+						type : 'cross',
+						label : {
+							backgroundColor : '#6a7985'
+						}
+					}
+				},
+				legend : {
+					data : [ '配对总数', '配对失败' ]
+				},
+				grid : {
+					left : '3%',
+					right : '4%',
+					bottom : '3%',
+					containLabel : true
+				},
+				xAxis : [ {
+					type : 'category',
+					boundaryGap : false,
+					data : []
+				} ],
+				yAxis : [ {
+					type : 'value'
+				} ],
+				series : [ {
+					name : '配对总数',
+					type : 'line',
+					label : {
+						normal : {
+							show : false,
+							position : 'top'
+						}
+					},
+					data : []
+				}, {
+					name : '配对失败',
+					type : 'line',
+					label : {
+						normal : {
+							show : false,
+							position : 'top'
+						}
+					},
+					data : []
+				} ]
+
+			})
+		}
+
+		function initPairSelect(type, brand_select, chiptype_select,
+				ctype_select, romver_select) {
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "btSelectParamServlet.action",
+				data : {
+					'ptype' : type
+				},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							if (result[i].type == 'pairbrand') {
+								$(brand_select).editableSelect('add',
+										function() {
+											$(this).text(result[i].param);
+										});
+							} else if (result[i].type == 'pairchiptype') {
+								$(chiptype_select).editableSelect('add',
+										function() {
+											$(this).text(result[i].param);
+										});
+							} else if (result[i].type == 'pairctype') {
+								$(ctype_select).editableSelect('add',
+										function() {
+											if (result[i].param == 1)
+												$(this).text('科大');
+											else if (result[i].param == 2)
+												$(this).text('浩博高');
+											else if (result[i].param == 3)
+												$(this).text('微纳');
+										});
+							} else if (result[i].type == 'pairromver') {
+								$(romver_select).editableSelect('add',
+										function() {
+											$(this).text(result[i].param);
+										});
+							}
+						}
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+				}
+			})
+		}
+
+		function freshBTPairChart(chart, ctype, chipType, brand, distinct,
+				romver) {
+			var sucess = [];
+			var fail = [];
+			var date = [];
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "btPairServlet.action",
+				data : {
+					'ctype' : ctype,
+					'chiptype' : chipType,
+					'brand' : brand,
+					'distinct' : distinct,
+					'romver' : romver
+				},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							sucess.push(result[i].sucess + result[i].fail);
+							fail.push(result[i].fail);
+							date.push(result[i].date);
+						}
+						chart.setOption({
+							xAxis : {
+								data : date
+							},
+							series : [ {
+								data : sucess
+							}, {
+								data : fail
+							} ]
+						})
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+					chart.hideLoading();
+				}
+			})
+		}
+	</script>
+
+	<!-- ============================================================================================================================================================ -->
+
+	<h3>5. 蓝牙失败(mac不去重)</h3>
+	<div>
+		&nbsp;&nbsp; <label>厂商</label>&nbsp; <select
+			id="pair_brand_editable-select2"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>平台</label>&nbsp; <select
+			id="pair_chiptype_editable-select2"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>遥控器</label>&nbsp; <select
+			id="pair_ctype_editable-select2"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>ROM版本</label>&nbsp; <select
+			id="pair_romver_editable-select2"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <input type="button" value="查询"
+			onclick="freshBTPairChart(btPairChart2, pairChiptype2, pairChiptype2, pairBrand2, '0', pairRomver2)" />
+	</div>
+	<div id="bt_pair2" style="width: auto; height: 600px;"></div>
+	<script type="text/javascript">
+		var pairBrand2;
+		var pairChiptype2;
+		var pairCtype2;
+		var pairRomver2;
+		$('#pair_brand_editable-select2').editableSelect({
+			effects : 'slide'
+		});
+		$('#pair_chiptype_editable-select2').editableSelect({
+			effects : 'slide'
+		});
+		$('#pair_ctype_editable-select2').editableSelect({
+			effects : 'slide'
+		});
+		$('#pair_romver_editable-select2').editableSelect({
+			effects : 'slide'
+		});
+		$('#pair_brand_editable-select2').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					pairBrand2 = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#pair_chiptype_editable-select2').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					pairChiptype2 = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#pair_ctype_editable-select2').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					pairCtype2 = (dom.text() == 'All' ? '' : dom.text());
+					if (pairCtype2 == '科大')
+						pairCtype2 = 1;
+					else if (pairCtype2 == '浩博高')
+						pairCtype2 = 2;
+					else if (pairCtype2 == '微纳')
+						pairCtype2 = 3;
+				});
+		$('#pair_romver_editable-select2').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					pairRomver2 = (dom.text() == 'All' ? '' : dom.text());
+				});
+
+		$(document).ready(
+				function() {
+					initBTPairChart(btPairChart2);
+					initPairSelect('pairbrand', '#pair_brand_editable-select2',
+							'#pair_chiptype_editable-select2',
+							'#pair_ctype_editable-select2',
+							'#pair_romver_editable-select2');
+					initPairSelect('pairchiptype',
+							'#pair_brand_editable-select2',
+							'#pair_chiptype_editable-select2',
+							'#pair_ctype_editable-select2',
+							'#pair_romver_editable-select2');
+					initPairSelect('pairctype', '#pair_brand_editable-select2',
+							'#pair_chiptype_editable-select2',
+							'#pair_ctype_editable-select2',
+							'#pair_romver_editable-select2');
+					initPairSelect('pairromver',
+							'#pair_brand_editable-select2',
+							'#pair_chiptype_editable-select2',
+							'#pair_ctype_editable-select2',
+							'#pair_romver_editable-select2');
+					freshBTPairChart(btPairChart2, pairChiptype2,
+							pairChiptype2, pairBrand2, '0', pairRomver2);
+				});
+
+		var btPairChart2 = echarts.init(document.getElementById('bt_pair2'));
+	</script>
+</body>
+</html>

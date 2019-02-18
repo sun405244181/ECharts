@@ -1,12 +1,213 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
-  <display-name>ECharts</display-name>
-  <welcome-file-list>
-    <welcome-file>index.html</welcome-file>
-    <welcome-file>index.htm</welcome-file>
-    <welcome-file>index.jsp</welcome-file>
-    <welcome-file>default.html</welcome-file>
-    <welcome-file>default.htm</welcome-file>
-    <welcome-file>default.jsp</welcome-file>
-  </welcome-file-list>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+	id="WebApp_ID" version="3.1">
+	<display-name>ECharts</display-name>
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.htm</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>default.html</welcome-file>
+		<welcome-file>default.htm</welcome-file>
+		<welcome-file>default.jsp</welcome-file>
+	</welcome-file-list>
+	<!-- SDKManager开机统计 -->
+	<servlet>
+		<servlet-name>SDKManagerBootServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.sdkmanager.SDKManagerBootServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>SDKManagerBootServlet</servlet-name>
+		<url-pattern>/sdkmanagerBootServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- SDKManager下载安装统计 -->
+	<servlet>
+		<servlet-name>AppDoanloadInstallServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.sdkmanager.AppDoanloadInstallServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>AppDoanloadInstallServlet</servlet-name>
+		<url-pattern>/appDoanloadInstallServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- P2P失败原因分析 -->
+	<servlet>
+		<servlet-name>P2pErrorCodeServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.sdkmanager.P2pErrorCodeServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>P2pErrorCodeServlet</servlet-name>
+		<url-pattern>/p2pErrorCodeServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- SDKManager安装失败原因分析 -->
+	<servlet>
+		<servlet-name>AppInstallFailServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.sdkmanager.AppInstallFailServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>AppInstallFailServlet</servlet-name>
+		<url-pattern>/appInstallFailServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- SDKManager版本分布 -->
+	<servlet>
+		<servlet-name>SDKManagerVersionServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.sdkmanager.SDKManagerVersionServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>SDKManagerVersionServlet</servlet-name>
+		<url-pattern>/sdkManagerVersionServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- 下载任务列表 -->
+	<servlet>
+		<servlet-name>DownloadTaskServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.sdkmanager.DownloadTaskServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>DownloadTaskServlet</servlet-name>
+		<url-pattern>/downloadTaskServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- 下拉列表参数 -->
+	<servlet>
+		<servlet-name>SelectParamServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.sdkmanager.SelectParamServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>SelectParamServlet</servlet-name>
+		<url-pattern>/selectParamServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- DLNA/AIRPLAY/MIRRORCAST日活 -->
+	<servlet>
+		<servlet-name>CastScreenServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.castscreen.CastScreenServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CastScreenServlet</servlet-name>
+		<url-pattern>/castScreenServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- DLNA/AIRPLAY/MIRRORCAST成功失败次数统计 -->
+	<servlet>
+		<servlet-name>CastScreenStatusServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.castscreen.CastScreenStatusServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CastScreenStatusServlet</servlet-name>
+		<url-pattern>/castScreenStatusServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- 投屏失败原因统计 -->
+	<servlet>
+		<servlet-name>CastScreenErrServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.castscreen.CastScreenErrServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CastScreenErrServlet</servlet-name>
+		<url-pattern>/castScreenErrServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- DLNA/AIRPLAY版本号 -->
+	<servlet>
+		<servlet-name>CastScreenSelectServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.castscreen.CastScreenSelectServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CastScreenSelectServlet</servlet-name>
+		<url-pattern>/castScreenSelectServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- DLNA/AIRPLAY选择框 -->
+	<servlet>
+		<servlet-name>CastScreenVersionServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.castscreen.CastScreenVersionServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CastScreenVersionServlet</servlet-name>
+		<url-pattern>/castScreenVersionServlet.action</url-pattern>
+	</servlet-mapping>	
+	<!-- FastAppResponseServlet -->
+	<servlet>
+		<servlet-name>FastAppResponseServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.fastapp.FastAppResponseServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>FastAppResponseServlet</servlet-name>
+		<url-pattern>/fastApp</url-pattern>
+	</servlet-mapping>
+	<!-- FastAppInfo -->
+	<servlet>
+		<servlet-name>FastAppInfoServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.fastapp.FastAppInfoServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>FastAppInfoServlet</servlet-name>
+		<url-pattern>/fastAppInfoServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- FastAppPredictRatio -->
+	<servlet>
+		<servlet-name>FastAppInPredictRatioServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.fastapp.FastAppInPredictRatioServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>FastAppInPredictRatioServlet</servlet-name>
+		<url-pattern>/fastAppInPredictRatioServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- 异常恢复 -->
+	<servlet>
+		<servlet-name>RomRecoveryServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.romrecovery.RomRecoveryServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>RomRecoveryServlet</servlet-name>
+		<url-pattern>/romRecoveryServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- 异常恢复选择框 -->
+	<servlet>
+		<servlet-name>RecoverySelectParamServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.romrecovery.RecoverySelectParamServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>RecoverySelectParamServlet</servlet-name>
+		<url-pattern>/recoverySelectParamServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- 蓝牙参数分布 -->
+	<servlet>
+		<servlet-name>BTSelectParamServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.bt.BTSelectParamServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>BTSelectParamServlet</servlet-name>
+		<url-pattern>/btSelectParamServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- 蓝牙版本分布 -->
+	<servlet>
+		<servlet-name>BTVersionServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.bt.BTVersionServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>BTVersionServlet</servlet-name>
+		<url-pattern>/btVersionServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- 预测蓝牙失联情况(按平台，按厂商， 按遥控器) -->
+	<servlet>
+		<servlet-name>BTStatusServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.bt.BTStatusServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>BTStatusServlet</servlet-name>
+		<url-pattern>/btStatusServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- 蓝牙失败(按平台，按厂商， 按遥控器) -->
+	<servlet>
+		<servlet-name>BTPairServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.bt.BTPairServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>BTPairServlet</servlet-name>
+		<url-pattern>/btPairServlet.action</url-pattern>
+	</servlet-mapping>
+	<!-- Log统计展示 -->
+	<servlet>
+		<servlet-name>LogInfoServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.log.LogInfoServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>LogInfoServlet</servlet-name>
+		<url-pattern>/logInfoServlet.action</url-pattern>
+	</servlet-mapping>
 </web-app>

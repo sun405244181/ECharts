@@ -1,0 +1,226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Fast App</title>
+<script src="js/echarts.js"></script>
+<script src="js/jquery-3.3.1.min.js"></script>
+</head>
+<body>
+	<br />
+	<h3>1. apps_info</h3>
+	<div id="appsinfo" style="width: auto; height: 400px;"></div>
+	<script type="text/javascript">
+		var appsinfoChart = echarts.init(document.getElementById('appsinfo'));
+		appsinfoChart.setOption({
+			title : {
+			//text : 'app_start_times/user_count_apps/app_counts'
+			},
+			tooltip : {
+				trigger : 'axis'
+			},
+			legend : {
+				data : [ 'app_start_times', 'user_count_apps', 'app_counts' ]
+			},
+			grid : {
+				left : '3%',
+				right : '4%',
+				bottom : '3%',
+				containLabel : true
+			},
+			//color:['#009393','#8080C0','#EA0000'],
+			xAxis : {
+				type : 'category',
+				boundaryGap : false,
+				data : []
+			},
+			yAxis : {
+				type : 'value'
+			},
+			series : [ {
+				name : 'app_start_times',
+				type : 'line',
+				areaStyle : {},
+				label : {
+					normal : {
+						show : false,
+						position : 'top'
+					}
+				},
+				data : []
+			}, {
+				name : 'user_count_apps',
+				type : 'line',
+				areaStyle : {},
+				label : {
+					normal : {
+						show : false,
+						position : 'top'
+					}
+				},
+				data : []
+			}, {
+				name : 'app_counts',
+				type : 'line',
+				areaStyle : {},
+				label : {
+					normal : {
+						show : false,
+						position : 'top'
+					}
+				},
+				data : []
+			} ]
+		})
+
+		var appinfosDate = [];
+		var appStartTimes = [];
+		var userCountApps = [];
+		var appCounts = [];
+		$.ajax({
+			type : "post",
+			async : true,
+			url : "fastAppInfoServlet.action",
+			data : {},
+			dataType : "json",
+			success : function(result) {
+				//alert(result);
+				if (result) {
+					for (var i = 0; i < result.length; i++) {
+						appStartTimes.push(result[i].appStartTimes);
+						userCountApps.push(result[i].userCountApps);
+						appCounts.push(result[i].appCounts);
+						appinfosDate.push(result[i].date);
+						//alert(result[i].name);
+					}
+					appsinfoChart.setOption({
+						xAxis : {
+							data : appinfosDate
+						},
+						series : [ {
+							data : appStartTimes
+						}, {
+							data : userCountApps
+						}, {
+							data : appCounts
+						} ]
+					})
+				}
+			},
+			error : function(errorMsg) {
+				alert("图表请求数据失败!");
+				appsinfoChart.hideLoading();
+			}
+		})
+	</script>
+
+
+	<!-- =================================================================================================================================================== -->
+
+	<br />
+	<h3>2. predict_ratio</h3>
+	<div id="predictratio" style="width: auto; height: 400px;"></div>
+	<script type="text/javascript">
+		var predictratioChart = echarts.init(document
+				.getElementById('predictratio'));
+		predictratioChart.setOption({
+			title : {
+			//text : 'app_start_times/user_count_apps/app_counts'
+			},
+			tooltip : {
+				trigger : 'axis'
+			},
+			legend : {
+				data : [ 'app_open_times_ratio', 'target_user_ratio',
+						'target_user_app_ratio' ]
+			},
+			grid : {
+				left : '3%',
+				right : '4%',
+				bottom : '3%',
+				containLabel : true
+			},
+			//color:['#009393','#8080C0','#EA0000'],
+			xAxis : {
+				type : 'category',
+				boundaryGap : false,
+				data : []
+			},
+			yAxis : {
+				type : 'value'
+			},
+			series : [ {
+				name : 'app_open_times_ratio',
+				type : 'line',
+				label : {
+					normal : {
+						show : false,
+						position : 'top'
+					}
+				},
+				data : []
+			}, {
+				name : 'target_user_ratio',
+				type : 'line',
+				label : {
+					normal : {
+						show : false,
+						position : 'top'
+					}
+				},
+				data : []
+			}, {
+				name : 'target_user_app_ratio',
+				type : 'line',
+				label : {
+					normal : {
+						show : false,
+						position : 'top'
+					}
+				},
+				data : []
+			} ]
+		})
+
+		var predictratioDate = [];
+		var appOpenTimesRatio = [];
+		var targetUserRatio = [];
+		var targetUserAppRatio = [];
+		$.ajax({
+			type : "post",
+			async : true,
+			url : "fastAppInPredictRatioServlet.action",
+			data : {},
+			dataType : "json",
+			success : function(result) {
+				//alert(result);
+				if (result) {
+					for (var i = 0; i < result.length; i++) {
+						appOpenTimesRatio.push(result[i].appOpenTimesRatio);
+						targetUserRatio.push(result[i].targetUserRatio);
+						targetUserAppRatio.push(result[i].targetUserAppRatio);
+						predictratioDate.push(result[i].date);
+						//alert(result[i].name);
+					}
+					predictratioChart.setOption({
+						xAxis : {
+							data : predictratioDate
+						},
+						series : [ {
+							data : appOpenTimesRatio
+						}, {
+							data : targetUserRatio
+						}, {
+							data : targetUserAppRatio
+						} ]
+					})
+				}
+			},
+			error : function(errorMsg) {
+				alert("图表请求数据失败!");
+				predictratioChart.hideLoading();
+			}
+		})
+	</script>
+</body>
+</html>

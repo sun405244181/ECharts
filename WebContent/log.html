@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>LOG处理</title>
+<script src="js/echarts.js"></script>
+<script src="js/jquery-3.3.1.min.js"></script>
+<script src="js/jquery-editable-select.min.js"></script>
+<link href="js/jquery-editable-select.min.css" rel="stylesheet">
+<style>
+td {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+</style>
+</head>
+<body>
+	</br>
+	<h3>1. system app crash log链接</h3>
+	<font color="#FF0000">跳转后在日志上报项中查看具体log</font>&nbsp;&nbsp;&nbsp;&nbsp;
+	<a href="javascript:login()">点击进入</a>
+	<script type="text/javascript">
+		function login() {
+			post('http://yhds-admin.tv.funshion.com/login', {
+				'login_username' : 'zhangfei',
+				'login_password' : 'zhangfei'
+			});
+		}
+
+		function post(URL, params) {
+			var form = document.createElement("form");
+			form.action = URL;
+			form.target = "_blank";
+			form.method = "post";
+			form.style.display = "none";
+
+			for ( var x in params) {
+				var opt = document.createElement("textarea");
+				opt.name = x;
+				opt.value = params[x];
+				form.appendChild(opt);
+			}
+			document.body.appendChild(form);
+			form.submit();
+		}
+	</script>
+	</br>
+	</br>
+
+	<!-- ========================================================================================================== -->
+
+	<h3>2. rom log文件列表</h3>
+	<table id='tab' style="width: 100%; height: auto; table-layout: fixed;">
+		<tr>
+			<th width="65%">标题</th>
+			<th width="15%">进程</th>
+			<th width="5%">个数</th>
+			<th width="5%">时间</th>
+			<th width="10%">操作</th>
+		</tr>
+	</table>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			loadData();
+		});
+
+		function loadData() {
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "logInfoServlet.action",
+				data : [],
+				dataType : "json",
+				success : function(result) {
+					showData(result);
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+				}
+			})
+		}
+
+		function showData(data) {
+			var str = "";
+			for (var i = 0; i < data.length; i++) {
+				str = "<tr><td align=\"left\">"
+						+ data[i].title
+						+ "</td><td align=\"center\">"
+						+ data[i].process
+						+ "</td><td align=\"center\">"
+						+ data[i].count
+						+ "</td><td align=\"center\">"
+						+ data[i].date
+						+ "</td><td align=\"center\"><a href=\"javascript:showContent('"
+						+ data[i].content + "')\">查看</a></td></tr>";
+				$("#tab").append(str);
+			}
+		}
+
+		function showContent(content) {
+			alert(content);
+		}
+	</script>
+	</br>
+	</br>
+</body>
+</html>

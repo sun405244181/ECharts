@@ -1,0 +1,682 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>DLNA/AIRPLAY/MIRRORCAST</title>
+<script src="js/echarts.js"></script>
+<script src="js/jquery-3.3.1.min.js"></script>
+<script src="js/jquery-editable-select.min.js"></script>
+<link href="js/jquery-editable-select.min.css" rel="stylesheet">
+</head>
+<body>
+	<br />
+	<h3>1. 投屏日活</h3>
+	<div>
+		<label>厂商</label><select id="dau_brand_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>平台</label><select
+			id="dau_chiptype_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>AIRPLAY版本</label><select
+			id="dau_airplay_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <label>DLNA版本</label><select
+			id="dau_dlna_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <label>MIRACAST版本</label><select
+			id="dau_miracast_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <input type="button" value="查询"
+			onclick="freshDAUChart(dau_brand, dau_chiptype, dau_airplay, dau_dlna, dau_miracast)" />
+	</div>
+	<br />
+	<div id="chartmain" style="width: auto; height: 400px;"></div>
+	<script type="text/javascript">
+	    var dau_brand;
+	    var dau_chiptype;
+	    var dau_airplay;
+	    var dau_dlna;
+	    var dau_miracast;
+		$('#dau_brand_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#dau_chiptype_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#dau_airplay_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#dau_dlna_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#dau_miracast_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#dau_brand_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					dau_brand = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#dau_chiptype_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					dau_chiptype = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#dau_airplay_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					dau_airplay = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#dau_dlna_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					dau_dlna = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#dau_miracast_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					dau_miracast = (dom.text() == 'All' ? '' : dom.text());
+				});
+		
+		var dailyChart = echarts.init(document.getElementById('chartmain'));
+		
+		$(document).ready(
+				function() {
+					initDAUChart(dailyChart);
+					initSelect('dau_brand', '#dau_brand_editable-select');
+					initSelect('dau_chiptype', '#dau_chiptype_editable-select');
+					initSelect('dau_airplay', '#dau_airplay_editable-select');
+					initSelect('dau_dlna', '#dau_dlna_editable-select');
+					initSelect('dau_miracast', '#dau_miracast_editable-select');
+					freshDAUChart(dau_brand, dau_chiptype, dau_airplay, dau_dlna, dau_miracast);
+				});
+		
+		function initDAUChart(chart) {
+			chart.setOption({
+				title : {
+				//text : 'DLNA/AIRPLAY/MIRRORCAST日活'
+				},
+				tooltip : {
+					trigger : 'axis'
+				},
+				legend : {
+					data : [ 'DLNA', 'AIRPLAY', 'MIRACAST' ]
+				},
+				grid : {
+					left : '3%',
+					right : '4%',
+					bottom : '3%',
+					containLabel : true
+				},
+				//color:['#009393','#8080C0','#EA0000'],
+				xAxis : {
+					type : 'category',
+					boundaryGap : false,
+					data : []
+				},
+				yAxis : {
+					type : 'value'
+				},
+				series : [ {
+					name : 'DLNA',
+					type : 'line',
+					areaStyle : {},
+					label : {
+						normal : {
+							show : false,
+							position : 'top'
+						}
+					},
+					data : []
+				}, {
+					name : 'AIRPLAY',
+					type : 'line',
+					areaStyle : {},
+					label : {
+						normal : {
+							show : false,
+							position : 'top'
+						}
+					},
+					data : []
+				}, {
+					name : 'MIRACAST',
+					type : 'line',
+					areaStyle : {},
+					label : {
+						normal : {
+							show : false,
+							position : 'top'
+						}
+					},
+					data : []
+				} ]
+			})
+		}
+		
+		function initSelect(type, select) {
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "castScreenSelectServlet.action",
+				data : {
+					'ptype' : type
+				},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							$(select).editableSelect('add', function() {
+								$(this).text(result[i].param);
+							});
+						}
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+				}
+			})
+		}
+		
+		function freshDAUChart(brand, chiptype, airplay, dlna, miracast) {
+			var dailyDate = [];
+			var dailyDLNA = [];
+			var dailyAirplay = [];
+			var dailyMirrorcast = [];
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "castScreenServlet.action",
+				data : {
+					'brand' : brand,
+					'chiptype' : chiptype,
+					'airplay' : airplay,
+					'dlna' : dlna,
+					'miracast' : miracast
+				},
+				dataType : "json",
+				success : function(result) {
+					//alert(result);
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							dailyDLNA.push(result[i].dlnaCount);
+							dailyAirplay.push(result[i].airplayCount);
+							dailyMirrorcast.push(result[i].mirrorcastCount);
+							dailyDate.push(result[i].date);
+							//alert(result[i].name);
+						}
+						dailyChart.setOption({
+							xAxis : {
+								data : dailyDate
+							},
+							series : [ {
+								data : dailyDLNA
+							}, {
+								data : dailyAirplay
+							}, {
+								data : dailyMirrorcast
+							} ]
+						})
+					}
+				},
+				error : function(errorMsg) {
+					alert("图表请求数据失败!");
+					dailyChart.hideLoading();
+				}
+			})
+		}
+	</script>
+
+
+	<!-- =================================================================================================================================================== -->
+
+
+	<br />
+	<br />
+	<h3>2. 投屏成功/失败次数统计</h3>
+	<br />
+	<br />
+	<div>
+		<label>厂商</label><select id="status_dlna_brand_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>平台</label><select
+			id="status_dlna_chiptype_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label>DLNA版本</label><select
+			id="status_dlna_ver_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <input type="button" value="查询"
+			onclick="freshStatusDiv('DLNA')" />
+	</div>
+	<br />
+	<div id="dlnaStatusDiv" style="width: audo; height: 400px;"></div>
+	<br />
+	<br />
+	<br />
+	<div>
+		<label>厂商</label><select id="status_airplay_brand_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>平台</label><select
+			id="status_airplay_chiptype_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label>AIRPLAY版本</label><select
+			id="status_airplay_ver_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <input type="button" value="查询"
+			onclick="freshStatusDiv('AIRPLAY')" />
+	</div>
+	<br />
+	<div id="airplayStatusDiv" style="width: audo; height: 400px;"></div>
+	<script type="text/javascript">
+		var status_dlna_brand;
+		var status_dlna_chiptype;
+		var status_dlna_ver;
+		var status_airplay_brand;
+		var status_airplay_chiptype;
+		var status_airplay_ver;
+		$('#status_dlna_brand_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_dlna_chiptype_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_dlna_ver_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_airplay_brand_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_airplay_chiptype_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_airplay_ver_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#status_dlna_brand_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					status_dlna_brand = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#status_dlna_chiptype_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					status_dlna_chiptype = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#status_dlna_ver_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					status_dlna_ver = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#status_airplay_brand_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					status_airplay_brand = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#status_airplay_chiptype_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					status_airplay_chiptype = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#status_airplay_ver_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					status_airplay_ver = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$(document).ready(function() {
+			initSelect('dau_brand', '#status_dlna_brand_editable-select');
+			initSelect('dau_chiptype', '#status_dlna_chiptype_editable-select');
+			initSelect('status_dlna_ver', '#status_dlna_ver_editable-select');
+			initSelect('dau_brand', '#status_airplay_brand_editable-select');
+			initSelect('dau_chiptype', '#status_airplay_chiptype_editable-select');
+			initSelect('status_airplay_ver', '#status_airplay_ver_editable-select');
+			statusInit('DLNA');
+			statusInit('AIRPLAY');
+			freshStatusDiv('DLNA');
+			freshStatusDiv('AIRPLAY');
+		});
+		var dlnaStatusChart = echarts.init(document
+				.getElementById('dlnaStatusDiv'));
+		var airplayStatusChart = echarts.init(document
+				.getElementById('airplayStatusDiv'));
+		function percentValue(p1, p2) {
+			return (Math.round(p1 / p2 * 10000) / 100.00 + "%");
+		}
+		function statusInit(type) {
+			var statusChart;
+			var subText;
+			if (type == 'DLNA') {
+				statusChart = dlnaStatusChart;
+				subText = 'DLNA成功失败次数';
+			} else {
+				statusChart = airplayStatusChart;
+				subText = 'AIRPLAY成功失败次数';
+			}
+			statusChart.setOption({
+				title : {
+					text : subText
+				},
+				tooltip : {
+					trigger : 'axis',
+					axisPointer : {
+						type : 'cross',
+						label : {
+							backgroundColor : '#6a7985'
+						}
+					},
+					formatter : function(params) {
+						return params[0].name
+								+ '<br/>'
+								+ params[0].seriesName
+								+ ' : '
+								+ params[0].value
+								+ '<br/>'
+								+ params[1].seriesName
+								+ ' : '
+								+ params[1].value
+								+ '<br/><br/>'
+								+ '成功率 : '
+								+ percentValue(params[0].value,
+										(params[0].value + params[1].value));
+					}
+				},
+				legend : {
+					data : [ '成功', '失败' ]
+				},
+				grid : {
+					left : '3%',
+					right : '4%',
+					bottom : '3%',
+					containLabel : true
+				},
+				xAxis : [ {
+					type : 'category',
+					boundaryGap : false,
+					data : []
+				} ],
+				yAxis : [ {
+					type : 'value'
+				} ],
+				series : [ {
+					name : '成功',
+					type : 'line',
+					label : {
+						normal : {
+							show : false,
+							position : 'top'
+						}
+					},
+					areaStyle : {
+						normal : {}
+					},
+					data : []
+				}, {
+					name : '失败',
+					type : 'line',
+					label : {
+						normal : {
+							show : false,
+							position : 'top'
+						}
+					},
+					areaStyle : {
+						normal : {}
+					},
+					data : []
+				} ]
+
+			})
+		}
+
+		function freshStatusDiv(type) {
+			var statusChart;
+			var app;
+			var brand;
+			var chiptype;
+			var appVer;
+			if (type == 'DLNA') {
+				app = 'DLNA';
+				statusChart = dlnaStatusChart;
+				brand = status_dlna_brand;
+				chiptype = status_dlna_chiptype;
+				appVer = status_dlna_ver;
+			} else {
+				app = 'AIRPLAY';
+				statusChart = airplayStatusChart;
+				brand = status_airplay_brand;
+				chiptype = status_airplay_chiptype;
+				appVer = status_airplay_ver;
+			}
+			var statusSucess = [];
+			var statusFail = [];
+			var statusDate = [];
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "castScreenStatusServlet.action",
+				data : {
+					'app' : app,
+					'brand' : brand,
+					'chiptype' : chiptype,
+					'appVer' : appVer
+				},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							statusSucess.push(result[i].sucessCount);
+							statusFail.push(result[i].failCount);
+							statusDate.push(result[i].date);
+						}
+						statusChart.setOption({
+							xAxis : {
+								data : statusDate
+							},
+							series : [ {
+								data : statusSucess
+							}, {
+								data : statusFail
+							} ]
+						})
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+					statusChart.hideLoading();
+				}
+			})
+		}
+	</script>
+
+
+	<!-- =================================================================================================================================================== -->
+
+
+	<br />
+	<br />
+	<br />
+	<h3>3. 投屏失败原因统计</h3>
+	<div>
+		<label>厂商</label><select id="err_dlna_brand_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>平台</label><select
+			id="err_dlna_chiptype_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label>DLNA版本</label><select
+			id="err_dlna_ver_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <label>时间(20181108)</label> <input
+			id="dlna_err_date" type="text" size="6" />&nbsp;&nbsp;&nbsp; <input
+			type="button" value="查询" onclick="freshErrDiv('DLNA')" />
+	</div>
+	<div id="dlnaErrDiv" style="width: auto; height: 400px;"></div>
+	<br />
+	<br />
+	<div>
+		<label>厂商</label><select id="err_airplay_brand_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>平台</label><select
+			id="err_airplay_chiptype_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label>AIRPLAY版本</label><select
+			id="err_airplay_ver_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <label>时间(20181108)</label> <input
+			id="airplay_err_date" type="text" size="6" />&nbsp;&nbsp;&nbsp; <input
+			type="button" value="查询" onclick="freshErrDiv('AIRPLAY')" />
+	</div>
+	<div id="airplayErrDiv" style="width: auto; height: 400px;"></div>
+	<script type="text/javascript">
+	    var err_dlna_brand;
+	    var err_dlna_chiptype;
+	    var err_dlna_ver;
+	    var err_airplay_brand;
+	    var err_airplay_chiptype;
+	    var err_airplay_ver;
+	    $('#err_dlna_brand_editable-select').editableSelect({
+		    effects : 'slide'
+	    });
+	    $('#err_dlna_chiptype_editable-select').editableSelect({
+		    effects : 'slide'
+	    });
+	    $('#err_dlna_ver_editable-select').editableSelect({
+		    effects : 'slide'
+	    });
+	    $('#err_airplay_brand_editable-select').editableSelect({
+		    effects : 'slide'
+	    });
+	    $('#err_airplay_chiptype_editable-select').editableSelect({
+		    effects : 'slide'
+        });
+	    $('#err_airplay_ver_editable-select').editableSelect({
+		    effects : 'slide'
+	    });
+	    $('#err_dlna_brand_editable-select').editableSelect().on(
+			    'select.editable-select', function(e, dom) {
+				    err_dlna_brand = (dom.text() == 'All' ? '' : dom.text());
+			    });
+	    $('#err_dlna_chiptype_editable-select').editableSelect().on(
+			    'select.editable-select', function(e, dom) {
+				    err_dlna_chiptype = (dom.text() == 'All' ? '' : dom.text());
+			    });
+	    $('#err_dlna_ver_editable-select').editableSelect().on(
+			    'select.editable-select', function(e, dom) {
+				    err_dlna_ver = (dom.text() == 'All' ? '' : dom.text());
+			    });
+	    $('#err_airplay_brand_editable-select').editableSelect().on(
+			    'select.editable-select', function(e, dom) {
+				    err_airplay_brand = (dom.text() == 'All' ? '' : dom.text());
+			    });
+	    $('#err_airplay_chiptype_editable-select').editableSelect().on(
+			    'select.editable-select', function(e, dom) {
+				    err_airplay_chiptype = (dom.text() == 'All' ? '' : dom.text());
+			    });
+	    $('#err_airplay_ver_editable-select').editableSelect().on(
+			    'select.editable-select', function(e, dom) {
+				    err_airplay_ver = (dom.text() == 'All' ? '' : dom.text());
+			    });
+		$(document).ready(function() {
+			initSelect('dau_brand', '#err_dlna_brand_editable-select');
+			initSelect('dau_chiptype', '#err_dlna_chiptype_editable-select');
+			initSelect('err_dlna_ver', '#err_dlna_ver_editable-select');
+			initSelect('dau_brand', '#err_airplay_brand_editable-select');
+			initSelect('dau_chiptype', '#err_airplay_chiptype_editable-select');
+			initSelect('err_airplay_ver', '#err_airplay_ver_editable-select');
+			errInit('DLNA');
+			errInit('AIRPLAY');
+			freshErrDiv('DLNA');
+			freshErrDiv('AIRPLAY');
+		});
+
+		var dlnaErrChart = echarts.init(document.getElementById('dlnaErrDiv'));
+		var airplayErrChart = echarts.init(document
+				.getElementById('airplayErrDiv'));
+
+		function errInit(type) {
+			var errChart;
+			var text;
+			if (type == 'DLNA') {
+				errChart = dlnaErrChart;
+				text = 'DLNA失败原因';
+			} else {
+				errChart = airplayErrChart;
+				text = 'AIRPLAY失败原因';
+			}
+			errChart.setOption({
+				title : {
+					text : text,
+					subtext : '按天统计',
+					x : 'center'
+				},
+				tooltip : {
+					trigger : 'item',
+					formatter : "{a} <br/>{b} : {c} ({d}%)"
+				},
+				legend : {
+					type : 'scroll',
+					orient : 'vertical',
+					right : 10,
+					top : 20,
+					bottom : 20,
+					data : [],
+					selected : []
+				},
+				series : [ {
+					name : 'error code',
+					type : 'pie',
+					radius : '55%',
+					center : [ '50%', '50%' ],
+					data : [],
+					itemStyle : {
+						emphasis : {
+							shadowBlur : 10,
+							shadowOffsetX : 0,
+							shadowColor : 'rgba(0, 0, 0, 0.5)'
+						}
+					}
+				} ]
+			})
+		}
+
+		function freshErrDiv(type) {
+			//alert(type);
+			var errChart;
+			var app;
+			var brand;
+			var chiptype;
+			var appVer;
+			var errDateId;
+			if (type == 'DLNA') {
+				app = 'DLNA';
+				brand = err_dlna_brand;
+				chiptype = err_dlna_chiptype;
+				appVer = err_dlna_ver;
+				errChart = dlnaErrChart;
+				errDateId = 'dlna_err_date';
+			} else {
+				app = 'AIRPLAY';
+				brand = err_airplay_brand;
+				chiptype = err_airplay_chiptype;
+				appVer = err_airplay_ver;
+				errChart = airplayErrChart;
+				errDateId = 'airplay_err_date';
+			}
+			var errLegendData = [];
+			var errSeriesData = [];
+			var errSelected = [];
+			var errDate = document.getElementById(errDateId).value;
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "castScreenErrServlet.action",
+				data : {
+					'app' : app,
+					'brand' : brand,
+					'chiptype' : chiptype,
+					'appVer' : appVer,
+					'date' : errDate
+				},
+				dataType : "json",
+				success : function(result) {
+					//alert(result);
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							errLegendData.push(result[i].errType);
+							errSeriesData.push({
+								name : result[i].errType,
+								value : result[i].errCount
+							});
+							errSelected[name] = i < 6;
+						}
+						errChart.setOption({
+							legend : {
+								data : errLegendData,
+								selected : errSelected
+							},
+							series : [ {
+								data : errSeriesData
+							} ]
+						})
+					}
+				},
+				error : function(errorMsg) {
+					alert("请求数据失败!");
+					errChart.hideLoading();
+				}
+			})
+		}
+	</script>
+	<br />
+</body>
+</html>

@@ -1,0 +1,806 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>SDKManager统计</title>
+<script src="js/echarts.js"></script>
+<script src="js/jquery-3.3.1.min.js"></script>
+<script src="js/jquery-editable-select.min.js"></script>
+<link href="js/jquery-editable-select.min.css" rel="stylesheet">
+<style type="text/css">
+</style>
+</head>
+<body>
+	<script type="text/javascript">
+		var p2p_errors = {
+			'0' : '0 任务添加成功',
+			'1' : '1 任务已存在',
+			'3' : '3 URL字段错误',
+			'4' : '4 URL长度大于1024字节',
+			'5' : '5 内存不足',
+			'6' : '6 添加任务参数错误',
+			'10' : '10 创建DAT文件失败',
+			'17' : '17 存在同名的目标文件',
+			'18' : '18 底层刚启动,尚未完成本地任务加载过程禁止添加任务操作'
+		};
+
+		function getP2pErrorLabel(key) {
+			var label = p2p_errors[key];
+			if (label == null)
+				return key;
+			return label;
+		}
+
+		var install_fails = {
+			'1' : '1 INSTALL_SUCESS',
+			'-104' : '-104 INSTALL_PARSE_FAILED_INCONSISTENT_CERTIFICATES',
+			'-103' : '-103 INSTALL_PARSE_FAILED_NO_CERTIFICATES',
+			'-25' : '-25 INSTALL_FAILED_VERSION_DOWNGRADE',
+			'-24' : '-24 INSTALL_FAILED_UID_CHANGED',
+			'-18' : '-18 INSTALL_FAILED_CONTAINER_ERROR',
+			'-4' : '-4 INSTALL_FAILED_INSUFFICIENT_STORAGE',
+			'-3' : '-3 INSTALL_FAILED_INVALID_URI',
+			'-2' : '-2 INSTALL_FAILED_INVALID_APK',
+			'-1' : '-1 INSTALL_FAILED_ALREADY_EXISTS',
+			'2' : '2 INSTALL_REASON_DEVICE_RESTORE'
+		};
+
+		function getInstallFailLabel(key) {
+			var label = install_fails[key];
+			if (label == null)
+				return key;
+			return label;
+		}
+	</script>
+	<h3>1. SDKManager版本分布情况</h3>
+	</br>
+	<div id="sdkmanagerVersions" style="width: auto; height: 600px;"></div>
+	<script type="text/javascript">
+		//alert("SDKManager版本分布情况");
+		var sdkVerChart = echarts.init(document
+				.getElementById('sdkmanagerVersions'));
+		sdkVerChart.setOption({
+			title : {
+				subtext : '按天统计',
+				x : 'center'
+			},
+			tooltip : {
+				trigger : 'item',
+				formatter : "{a} <br/>{b} : {c} ({d}%)"
+			},
+			legend : {
+				type : 'scroll',
+				orient : 'vertical',
+				right : 10,
+				top : 20,
+				bottom : 20,
+				data : [],
+
+			//selected : data.selected
+			},
+			series : [ {
+				name : 'version code',
+				type : 'pie',
+				radius : '55%',
+				center : [ '50%', '50%' ],
+				data : [],
+				itemStyle : {
+					emphasis : {
+						shadowBlur : 10,
+						shadowOffsetX : 0,
+						shadowColor : 'rgba(0, 0, 0, 0.5)'
+					}
+				}
+			} ]
+		})
+
+		var sdkVerLegendData = [];
+		var sdkVerSeriesData = [];
+		var sdkVerSelected = [];
+		$.ajax({
+			type : "post",
+			async : true,
+			url : "sdkManagerVersionServlet.action",
+			data : {},
+			dataType : "json",
+			success : function(result) {
+				//alert(result);
+				if (result) {
+					for (var i = 0; i < result.length; i++) {
+						sdkVerLegendData.push(result[i].sdkVer);
+						sdkVerSeriesData.push({
+							name : result[i].sdkVer,
+							value : result[i].count
+						});
+						sdkVerSelected[name] = i < 6;
+					}
+					sdkVerChart.setOption({
+						legend : {
+							data : sdkVerLegendData
+						},
+						series : [ {
+							data : sdkVerSeriesData
+						} ]
+					})
+				}
+			},
+			error : function(errorMsg) {
+				alert("SDKManager版本分布情况数据失败!");
+				sdkVerChart.hideLoading();
+			}
+		})
+	</script>
+
+	<!-- ############################################################################################################################# -->
+
+	<h3>2. SDKManager开机启动统计</h3>
+	<br />
+	<div id="boot" style="width: audo; height: 400px;"></div>
+	<script type="text/javascript">
+		//alert("sdkmanager开机启动统计");
+		var bootChart = echarts.init(document.getElementById('boot'));
+		bootChart.setOption({
+			tooltip : {
+				trigger : 'axis',
+				axisPointer : {
+					type : 'cross',
+					label : {
+						backgroundColor : '#6a7985'
+					}
+				}
+			},
+			legend : {
+				data : [ 'TV开机日活', 'sdkmanager日活' ]
+			},
+			grid : {
+				left : '3%',
+				right : '4%',
+				bottom : '3%',
+				containLabel : true
+			},
+			xAxis : [ {
+				type : 'category',
+				boundaryGap : false,
+				data : []
+			} ],
+			yAxis : [ {
+				type : 'value'
+			} ],
+			series : [ {
+				name : 'TV开机日活',
+				type : 'line',
+				label : {
+					normal : {
+						show : false,
+						position : 'top'
+					}
+				},
+				areaStyle : {
+					normal : {}
+				},
+				data : []
+			}, {
+				name : 'sdkmanager日活',
+				type : 'line',
+				label : {
+					normal : {
+						show : false,
+						position : 'top'
+					}
+				},
+				areaStyle : {
+					normal : {}
+				},
+				data : []
+			} ]
+
+		})
+
+		var tvCount = [];
+		var appCount = [];
+		var bootDate = [];
+		$.ajax({
+			type : "post",
+			async : true,
+			url : "sdkmanagerBootServlet.action",
+			data : {},
+			dataType : "json",
+			success : function(result) {
+				//alert(result);
+				if (result) {
+					for (var i = 0; i < result.length; i++) {
+						tvCount.push(result[i].tvCount);
+						appCount.push(result[i].appCount);
+						bootDate.push(result[i].date);
+						//alert(result[i].tvCount);
+					}
+					bootChart.setOption({
+						xAxis : {
+							data : bootDate
+						},
+						series : [ {
+							data : tvCount
+						}, {
+							data : appCount
+						} ]
+					})
+				}
+			},
+			error : function(errorMsg) {
+				alert("sdkmanager开机启动成功率数据失败!");
+				bootChart.hideLoading();
+			}
+		})
+	</script>
+	</br>
+
+	<!-- ############################################################################################################################# -->
+
+	<h3>3. 下载安装成功率</h3>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>下载任务</label>&nbsp;
+		<select id="di_app_editable-select" style="width: 400px;"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <label>时间(20181108)</label> <input id="di_date"
+			type="text" size="6" />&nbsp;&nbsp;&nbsp; <input type="button"
+			value="查询" onclick="freshDIDiv()" />
+	</div>
+	</br>
+	<div id="downloadAndInstall" style="width: audo; height: 400px;"></div>
+	<script type="text/javascript">
+		var downloadAndInstallChart = echarts.init(document
+				.getElementById('downloadAndInstall'));
+		downloadAndInstallChart.showLoading({
+			text: '数据正在努力加载...'
+		});
+
+		var diApp;
+		var downloadTask = '全部任务';
+		$('#di_app_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#di_app_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					diApp = (dom.text() == 'All' ? '' : dom.text());
+					downloadTask = (dom.text() == 'All' ? '全部任务' : dom.text());
+				});
+
+		$(document).ready(function() {
+			initDownloadTasks();
+			diChartInit();
+			freshDIDiv();
+		});
+
+		function initDownloadTasks() {
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "downloadTaskServlet.action",
+				data : {},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							$('#di_app_editable-select').editableSelect('add',
+									function() {
+										$(this).text(result[i].task);
+									});
+						}
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+				}
+			})
+		}
+
+		function percentValue(p1, p2) {
+			return (Math.round(p1 / p2 * 10000) / 100.00 + "%");
+		}
+
+		function diChartInit() {
+			downloadAndInstallChart
+					.setOption({
+						tooltip : {
+							trigger : 'axis',
+							axisPointer : {
+								type : 'cross',
+								label : {
+									backgroundColor : '#6a7985'
+								}
+							},
+							formatter : function(params) {
+								return params[0].name
+										+ '<br/>'
+										+ params[0].seriesName
+										+ ' : '
+										+ params[0].value
+										+ '<br/>'
+										+ params[1].seriesName
+										+ ' : '
+										+ params[1].value
+										+ '<br/>'
+										+ params[2].seriesName
+										+ ' : '
+										+ params[2].value
+										+ '<br/><br/>'
+										+ '下载成功率 : '
+										+ percentValue(params[1].value,
+												params[0].value)
+										+ '<br/>'
+										+ '安装成功率 : '
+										+ percentValue(params[2].value,
+												params[1].value);
+							}
+						},
+						legend : {
+							data : [ '开始下载', '下载成功', '安装成功' ]
+						},
+						grid : {
+							left : '3%',
+							right : '4%',
+							bottom : '3%',
+							containLabel : true
+						},
+						xAxis : [ {
+							type : 'category',
+							boundaryGap : false,
+							data : []
+						} ],
+						yAxis : [ {
+							type : 'value'
+						} ],
+						series : [ {
+							name : '开始下载',
+							type : 'line',
+							label : {
+								normal : {
+									show : false,
+									position : 'top'
+								}
+							},
+							areaStyle : {
+								normal : {}
+							},
+							data : []
+						}, {
+							name : '下载成功',
+							type : 'line',
+							label : {
+								normal : {
+									show : false,
+									position : 'top'
+								}
+							},
+							areaStyle : {
+								normal : {}
+							},
+							data : []
+						}, {
+							name : '安装成功',
+							type : 'line',
+							label : {
+								normal : {
+									show : false,
+									position : 'top'
+								}
+							},
+							areaStyle : {
+								normal : {}
+							},
+							data : []
+						} ]
+
+					})
+		}	
+
+		function freshDIDiv() {
+			var downloadStart = [];
+			var downloadSucess = [];
+			var installSucess = [];
+			var downloadAndInstallDate = [];
+			var diDate = document.getElementById("di_date").value;
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "appDoanloadInstallServlet.action",
+				data : {
+					//'romVer' : diRomVer,
+					//'sdkVer' : diSdkVer,
+					'app' : diApp,
+					'date' : diDate
+				},
+				dataType : "json",
+				success : function(result) {
+					//alert(result);
+					if (result) {
+						fibonacciDownloadStart = 0;
+						fibonacciDownloadSucess = 0;
+						fibonacciInstallSucess = 0;
+						for (var i = 0; i < result.length; i++) {
+							//alert(result[i].date)
+							fibonacciDownloadStart += result[i].downloadStart;
+							fibonacciDownloadSucess += result[i].downloadSucess;
+							fibonacciInstallSucess += result[i].installSucess;
+							
+							downloadStart.push(fibonacciDownloadStart);
+							downloadSucess.push(fibonacciDownloadSucess);
+							installSucess.push(fibonacciInstallSucess);
+							downloadAndInstallDate.push(result[i].date);
+							//alert(result[i].tvCount);
+						}
+						downloadAndInstallChart.setOption({
+							title : {
+								text : downloadTask
+							},
+							xAxis : {
+								data : downloadAndInstallDate
+							},
+							series : [ {
+								data : downloadStart
+							}, {
+								data : downloadSucess
+							}, {
+								data : installSucess
+							} ]
+						})
+					};
+					downloadAndInstallChart.hideLoading();
+				},
+				error : function(errorMsg) {
+					alert("下载安装成功数据失败!");
+					downloadAndInstallChart.hideLoading();
+				}
+			})
+		}
+	</script>
+	</br>
+
+	<!-- ############################################################################################################################# -->
+
+	<h3>4. P2P下载分析</h3>
+	<div>
+		&nbsp;&nbsp;<label>sdkmanager版本</label>&nbsp; <select
+			id="p2p_err_sdkmanager_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;<label>下载任务</label>&nbsp; <select
+			id="p2p_err_task_editable-select" style="width: 400px;"><option>All</option>
+		</select>&nbsp;&nbsp;<label>时间(20181108)</label> <input id="p2perror_date"
+			type="text" size="6" />&nbsp;&nbsp;&nbsp; <input type="button"
+			value="查询" onclick="freshP2pErrorDiv()" />
+	</div>
+	<br />
+	<div id="p2pError" style="width: audo; height: 400px;"></div>
+	<script type="text/javascript">
+		var p2pErrorChart = echarts.init(document.getElementById('p2pError'));
+
+		var p2pErrorSdkVer;
+		var p2pErrorApp;
+		$('#p2p_err_sdkmanager_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#p2p_err_task_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#p2p_err_sdkmanager_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					p2pErrorSdkVer = (dom.text() == 'All' ? '' : dom.text());
+				});
+		$('#p2p_err_task_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					p2pErrorApp = (dom.text() == 'All' ? '' : dom.text());
+				});
+
+		$(document).ready(function() {
+			initP2pErrSelect('p2prr_sdkmanager');
+			initP2pErrSelect('p2prr_addtask');
+			p2pErrorChartInit();
+			freshP2pErrorDiv();
+		});
+
+		function initP2pErrSelect(ptype) {
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "selectParamServlet.action",
+				data : {
+					'ptype' : ptype,
+				},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							if (ptype == 'p2prr_sdkmanager') {
+								$('#p2p_err_sdkmanager_editable-select')
+										.editableSelect('add', function() {
+											$(this).text(result[i].param);
+										});
+							} else if (ptype == 'p2prr_addtask') {
+								$('#p2p_err_task_editable-select')
+										.editableSelect('add', function() {
+											$(this).text(result[i].param);
+										});
+							}
+						}
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+				}
+			})
+		}
+
+		function p2pErrorChartInit() {
+			p2pErrorChart.setOption({
+				title : {
+					text : '添加下载任务成功及失败统计',
+					subtext : '按天统计',
+					x : 'center'
+				},
+				tooltip : {
+					trigger : 'item',
+					formatter : "{a} <br/>{b} : {c} ({d}%)"
+				},
+				legend : {
+					type : 'scroll',
+					orient : 'vertical',
+					right : 10,
+					top : 20,
+					bottom : 20,
+					data : [],
+
+				//selected : data.selected
+				},
+				series : [ {
+					name : 'AddTask return code',
+					type : 'pie',
+					radius : '55%',
+					center : [ '50%', '50%' ],
+					data : [],
+					itemStyle : {
+						emphasis : {
+							shadowBlur : 10,
+							shadowOffsetX : 0,
+							shadowColor : 'rgba(0, 0, 0, 0.5)'
+						}
+					}
+				} ]
+			})
+		}
+
+		function freshP2pErrorDiv() {
+			var p2pErrorLegendData = [];
+			var p2pErrorSeriesData = [];
+			var p2pErrorSelected = [];
+			var p2pErrorDate = document.getElementById("p2perror_date").value;
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "p2pErrorCodeServlet.action",
+				data : {
+					'sdkVer' : p2pErrorSdkVer,
+					'app' : p2pErrorApp,
+					'date' : p2pErrorDate
+				},
+				dataType : "json",
+				success : function(result) {
+					//alert(result);
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							p2pErrorLegendData
+									.push(getP2pErrorLabel(result[i].errorCode
+											.toString()));
+							p2pErrorSeriesData.push({
+								name : getP2pErrorLabel(result[i].errorCode
+										.toString()),
+								value : result[i].count
+							});
+							p2pErrorSelected[name] = i < 6;
+						}
+						p2pErrorChart.setOption({
+							legend : {
+								data : p2pErrorLegendData
+							},
+							series : [ {
+								data : p2pErrorSeriesData
+							} ]
+						})
+					}
+				},
+				error : function(errorMsg) {
+					alert("P2P任务失败请求数据失败!");
+					p2pErrorChart.hideLoading();
+				}
+			})
+		}
+	</script>
+	<br />
+
+	<!-- ############################################################################################################################# -->
+
+	<h3>5. APK安装分析</h3>
+	<div>
+		&nbsp;&nbsp;<label>rom版本</label>&nbsp; <select
+			id="install_fail_rom_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;<label>sdkmanager版本</label>&nbsp; <select
+			id="install_fail_sdkmanager_editable-select"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;<label>安装任务</label>&nbsp; <select
+			id="install_fail_task_editable-select" style="width: 400px;"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp;<label>时间(20181108)</label> <input
+			id="install_fail_date" type="text" size="6" />&nbsp;&nbsp;&nbsp; <input
+			type="button" value="查询" onclick="freshInstallFailDiv()" />
+	</div>
+	<br />
+	<div id="installFail" style="width: auto; height: 400px;"></div>
+	<script type="text/javascript">
+		var installFailChart = echarts.init(document
+				.getElementById('installFail'));
+
+		var installFailRomVer;
+		var installFailSdkVer;
+		var installFailApp;
+		$('#install_fail_rom_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#install_fail_sdkmanager_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#install_fail_task_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#install_fail_rom_editable-select').editableSelect()
+				.on(
+						'select.editable-select',
+						function(e, dom) {
+							installFailRomVer = (dom.text() == 'All' ? '' : dom
+									.text());
+						});
+		$('#install_fail_sdkmanager_editable-select').editableSelect()
+				.on(
+						'select.editable-select',
+						function(e, dom) {
+							installFailSdkVer = (dom.text() == 'All' ? '' : dom
+									.text());
+						});
+		$('#install_fail_task_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					installFailApp = (dom.text() == 'All' ? '' : dom.text());
+				});
+
+		//alert("SDKManager安装失败原因分析");
+		$(document).ready(function() {
+			initInstallFialSelect('install_fail_rom');
+			initInstallFialSelect('install_fail_sdkmanager');
+			initInstallFialSelect('install_fail_task');
+			installFailChartInit();
+			freshInstallFailDiv();
+		});
+
+		function initInstallFialSelect(ptype) {
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "selectParamServlet.action",
+				data : {
+					'ptype' : ptype,
+				},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							if (ptype == 'install_fail_rom') {
+								$('#install_fail_rom_editable-select')
+										.editableSelect('add', function() {
+											$(this).text(result[i].param);
+										});
+							} else if (ptype == 'install_fail_sdkmanager') {
+								$('#install_fail_sdkmanager_editable-select')
+										.editableSelect('add', function() {
+											$(this).text(result[i].param);
+										});
+							} else if (ptype == 'install_fail_task') {
+								$('#install_fail_task_editable-select')
+										.editableSelect('add', function() {
+											$(this).text(result[i].param);
+										});
+							}
+						}
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+				}
+			})
+		}
+
+		function installFailChartInit() {
+			installFailChart.setOption({
+				title : {
+					text : 'APK安装成功及失败统计',
+					subtext : '按天统计',
+					x : 'center'
+				},
+				tooltip : {
+					trigger : 'item',
+					formatter : "{a} <br/>{b} : {c} ({d}%)"
+				},
+				legend : {
+					type : 'scroll',
+					orient : 'vertical',
+					right : 10,
+					top : 20,
+					bottom : 20,
+					data : [],
+					selected : []
+				},
+				series : [ {
+					name : 'Installation return code',
+					type : 'pie',
+					radius : '55%',
+					center : [ '50%', '50%' ],
+					data : [],
+					itemStyle : {
+						emphasis : {
+							shadowBlur : 10,
+							shadowOffsetX : 0,
+							shadowColor : 'rgba(0, 0, 0, 0.5)'
+						}
+					}
+				} ]
+			})
+		}
+
+		function freshInstallFailDiv() {
+			var installFailLegendData = [];
+			var installFailSeriesData = [];
+			var installFailSelected = [];
+			var installFailDate = document.getElementById("install_fail_date").value;
+			$
+					.ajax({
+						type : "post",
+						async : true,
+						url : "appInstallFailServlet.action",
+						data : {
+							'romVer' : installFailRomVer,
+							'sdkVer' : installFailSdkVer,
+							'app' : installFailApp,
+							'date' : installFailDate
+						},
+						dataType : "json",
+						success : function(result) {
+							//alert(result);
+							if (result) {
+								for (var i = 0; i < result.length; i++) {
+									installFailLegendData
+											.push(getInstallFailLabel(result[i].errorCode
+													.toString()));
+									installFailSeriesData
+											.push({
+												name : getInstallFailLabel(result[i].errorCode
+														.toString()),
+												value : result[i].count
+											});
+									installFailSelected[name] = i < 6;
+								}
+								installFailChart.setOption({
+									legend : {
+										data : installFailLegendData,
+										selected : installFailSelected
+									},
+									series : [ {
+										data : installFailSeriesData
+									} ]
+								})
+							}
+						},
+						error : function(errorMsg) {
+							alert("SDKManager安装失败请求数据失败!");
+							installFailChart.hideLoading();
+						}
+					})
+		}
+	</script>
+
+	<!-- ############################################################################################################################# -->
+
+	<h3>6. 测试</h3>
+</body>
+</html>
