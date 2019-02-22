@@ -30,6 +30,15 @@
 		<servlet-name>AppDoanloadInstallServlet</servlet-name>
 		<url-pattern>/appDoanloadInstallServlet.action</url-pattern>
 	</servlet-mapping>
+	<!-- DEBUG SDKManager下载安装统计 -->
+	<servlet>
+		<servlet-name>DebugAppDoanloadInstallServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.sdkmanager.DebugAppDoanloadInstallServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>DebugAppDoanloadInstallServlet</servlet-name>
+		<url-pattern>/debugAppDoanloadInstallServlet.action</url-pattern>
+	</servlet-mapping>	
 	<!-- P2P失败原因分析 -->
 	<servlet>
 		<servlet-name>P2pErrorCodeServlet</servlet-name>
@@ -66,6 +75,15 @@
 		<servlet-name>DownloadTaskServlet</servlet-name>
 		<url-pattern>/downloadTaskServlet.action</url-pattern>
 	</servlet-mapping>
+	<!-- DEBUG下载任务列表 -->
+	<servlet>
+		<servlet-name>DebugDownloadTaskServlet</servlet-name>
+		<servlet-class>com.funshion.servlet.sdkmanager.DebugDownloadTaskServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>DebugDownloadTaskServlet</servlet-name>
+		<url-pattern>/debugDownloadTaskServlet.action</url-pattern>
+	</servlet-mapping>	
 	<!-- 下拉列表参数 -->
 	<servlet>
 		<servlet-name>SelectParamServlet</servlet-name>

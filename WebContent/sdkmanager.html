@@ -801,7 +801,252 @@
 
 	<!-- ############################################################################################################################# -->
 
-	<h3>6. 测试</h3>
-	
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<h3>6. 下载成功率低分析</h3>
+	<div>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <label>下载任务</label>&nbsp;
+		<select id="debug_download_app_editable-select" style="width: 400px;"><option>All</option>
+		</select>&nbsp;&nbsp;&nbsp; <label>时间(20181108)</label> <input
+			id="debug_download_date" type="text" size="6" />&nbsp;&nbsp;&nbsp; <input
+			type="button" value="查询" onclick="freshDebugDownloadDiv()" />
+	</div>
+	</br>
+	<div id="debugDownloadAndInstall" style="width: audo; height: 400px;"></div>
+	<script type="text/javascript">
+		var debugDownloadChart = echarts.init(document
+				.getElementById('debugDownloadAndInstall'));
+		debugDownloadChart.showLoading({
+			text: '数据正在努力加载...'
+		});
+
+		var debugDownloadApp;
+		var debugDownloadTask = '全部任务';
+		$('#debug_download_app_editable-select').editableSelect({
+			effects : 'slide'
+		});
+		$('#debug_download_app_editable-select').editableSelect().on(
+				'select.editable-select', function(e, dom) {
+					debugDownloadApp = (dom.text() == 'All' ? '' : dom.text());
+					debugDownloadTask = (dom.text() == 'All' ? '全部任务' : dom.text());
+				});
+
+		$(document).ready(function() {
+			initDebugDownloadTasks();
+			debugDownloadChartInit();
+			freshDebugDownloadDiv();
+		});
+
+		function initDebugDownloadTasks() {
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "debugDownloadTaskServlet.action",
+				data : {},
+				dataType : "json",
+				success : function(result) {
+					if (result) {
+						for (var i = 0; i < result.length; i++) {
+							$('#debug_download_app_editable-select').editableSelect('add',
+									function() {
+										$(this).text(result[i].task);
+									});
+						}
+					}
+				},
+				error : function(errorMsg) {
+					alert("数据获取失败!");
+				}
+			})
+		}
+
+		function debugDownloadChartInit() {
+			debugDownloadChart
+					.setOption({
+						tooltip : {
+							trigger : 'axis',
+							axisPointer : {
+								type : 'cross',
+								label : {
+									backgroundColor : '#6a7985'
+								}
+							},
+							formatter : function(params) {
+								return params[0].name
+										+ '<br/>'
+										+ params[0].seriesName
+										+ ' : '
+										+ params[0].value
+										+ '<br/>'
+										+ params[1].seriesName
+										+ ' : '
+										+ params[1].value
+										+ '<br/>'
+										+ params[2].seriesName
+										+ ' : '
+										+ params[2].value
+										+ '<br/>'
+										+ params[3].seriesName
+										+ ' : '
+										+ params[3].value
+										+ '<br/><br/>'
+										+ '任务添加成功率 : '
+										+ percentValue(params[1].value,
+												params[0].value)
+										+ '<br/>'
+										+ '下载成功率 : '
+										+ percentValue(params[2].value,
+												params[1].value)
+										+ '<br/>'
+										+ '安装成功率 : '
+										+ percentValue(params[3].value,
+												params[2].value);
+							}
+						},
+						legend : {
+							data : [ '开始下载', '任务添加成功', '下载成功', '安装成功' ]
+						},
+						grid : {
+							left : '3%',
+							right : '4%',
+							bottom : '3%',
+							containLabel : true
+						},
+						xAxis : [ {
+							type : 'category',
+							boundaryGap : false,
+							data : []
+						} ],
+						yAxis : [ {
+							type : 'value'
+						} ],
+						series : [ {
+							name : '开始下载',
+							type : 'line',
+							label : {
+								normal : {
+									show : false,
+									position : 'top'
+								}
+							},
+							areaStyle : {
+								normal : {}
+							},
+							data : []
+						}, {
+							name : '任务添加成功',
+							type : 'line',
+							label : {
+								normal : {
+									show : false,
+									position : 'top'
+								}
+							},
+							areaStyle : {
+								normal : {}
+							},
+							data : []
+						}, {
+							name : '下载成功',
+							type : 'line',
+							label : {
+								normal : {
+									show : false,
+									position : 'top'
+								}
+							},
+							areaStyle : {
+								normal : {}
+							},
+							data : []
+						}, {
+							name : '安装成功',
+							type : 'line',
+							label : {
+								normal : {
+									show : false,
+									position : 'top'
+								}
+							},
+							areaStyle : {
+								normal : {}
+							},
+							data : []
+						} ]
+
+					})
+		}	
+
+		function freshDebugDownloadDiv() {
+			var downloadStart = [];
+			var addTaskSucess = [];
+			var downloadSucess = [];
+			var installSucess = [];
+			var downloadAndInstallDate = [];
+			var diDate = document.getElementById("debug_download_date").value;
+			$.ajax({
+				type : "post",
+				async : true,
+				url : "debugAppDoanloadInstallServlet.action",
+				data : {
+					//'romVer' : diRomVer,
+					//'sdkVer' : diSdkVer,
+					'app' : debugDownloadApp,
+					'date' : diDate
+				},
+				dataType : "json",
+				success : function(result) {
+					//alert(result);
+					if (result) {
+						fibonacciDownloadStart = 0;
+						fibonacciaddTaskSucess = 0;
+						fibonacciDownloadSucess = 0;
+						fibonacciInstallSucess = 0;
+						for (var i = 0; i < result.length; i++) {
+							//alert(result[i].date)
+							fibonacciDownloadStart += result[i].downloadStart;
+							fibonacciaddTaskSucess += result[i].addTaskSucess;
+							fibonacciDownloadSucess += result[i].downloadSucess;
+							fibonacciInstallSucess += result[i].installSucess;
+							
+							downloadStart.push(fibonacciDownloadStart);
+							addTaskSucess.push(fibonacciaddTaskSucess);
+							downloadSucess.push(fibonacciDownloadSucess);
+							installSucess.push(fibonacciInstallSucess);
+							downloadAndInstallDate.push(result[i].date);
+							//alert(result[i].tvCount);
+						}
+						debugDownloadChart.setOption({
+							title : {
+								text : downloadTask
+							},
+							xAxis : {
+								data : downloadAndInstallDate
+							},
+							series : [ {
+								data : downloadStart
+							}, {
+								data : addTaskSucess
+							},{
+								data : downloadSucess
+							}, {
+								data : installSucess
+							} ]
+						})
+					};
+					debugDownloadChart.hideLoading();
+				},
+				error : function(errorMsg) {
+					alert("下载安装成功数据失败!");
+					debugDownloadChart.hideLoading();
+				}
+			})
+		}
+	</script>
+	</br>
 </body>
 </html>
